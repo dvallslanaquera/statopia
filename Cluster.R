@@ -1,0 +1,258 @@
+# -------------------------------------------------------- #
+## Hierarchical clustering (HC)
+# -------------------------------------------------------- #
+#
+# In this analysis we will see how to make a hierarchical clustering model. The
+# objectives are to explore if there are similar groups of elements and to see how 
+# they are interrelated 
+# 
+# As example, we will use the Doubs database, based on a sample of fish from the
+# Doubs river in France. 
+
+library(ade4)
+library(vegan)
+library(gclus)
+library(cluster)
+library(RColorBrewer)
+library(labdsv)
+
+# 1- Data preparation
+# We need to remove the rows with double 0 or NA and then normalize the values.
+
+data(doubs)
+spe <- doubs$fish[-8,]
+env <- doubs$env[-8,]
+spa <- doubs$xy[-8,]
+
+spe.norm <- decostand(spe, "normalize") 
+spe.ch <- vegdist(spe.norm, "euc") 
+
+# 2- Choosing the clustering method.
+
+par(mfrow = c(2, 3)) 
+
+## Single method
+spe.ch.single <- hclust(spe.ch, method = "single") 
+plot(spe.ch.single)
+
+## Complete method
+spe.ch.complete <- hclust(spe.ch, method = "complete")
+plot(spe.ch.complete) 
+
+## UPGMA method
+spe.ch.UPGMA <- hclust(spe.ch, method = "average") 
+plot(spe.ch.UPGMA)
+
+## Centroid method
+spe.ch.centroid <- hclust(spe.ch, method = "centroid") 
+plot(spe.ch.centroid)
+
+# Ward method
+spe.ch.ward <- hclust(spe.ch, method = "ward.D") 
+plot(spe.ch.ward)
+
+# Squared transformation
+spe.ch.ward$height <- sqrt(spe.ch.ward$height)
+plot(spe.ch.ward)
+
+# We can also compare two differents methods in a table
+table(spe.ch.single, spe.ch.complete)
+
+# 3- Choosing the best method
+# We can see overfitting in the centroid method case. In the rest of cases we have 
+# to calculate:
+# - Cophenetic correlation.
+# - Gower distance value.
+
+# 3.1. Cophenetic correlation -------  
+spe.ch.single.coph <- cophenetic(spe.ch.single) # Single
+cor(spe.ch, spe.ch.single.coph)
+
+spe.ch.comp.coph <- cophenetic(spe.ch.complete) # Complete
+cor(spe.ch, spe.ch.comp.coph)
+
+spe.ch.UPGMA.coph <- cophenetic(spe.ch.UPGMA) # Average
+cor(spe.ch, spe.ch.UPGMA.coph)
+
+spe.ch.ward.coph <- cophenetic(spe.ch.ward) # Ward 
+cor(spe.ch, spe.ch.ward.coph)
+
+cor(spe.ch, spe.ch.ward.coph, method="spearman")
+
+# Graphical representation of the cophenetic correlation (Shepard diagram)
+
+par(mfrow = c(2, 2))
+plot(spe.ch, spe.ch.single.coph, xlab = "Chord distance", 
+     ylab = "Cophenetic distance", asp = 1, xlim = c(0, sqrt(2)), ylim = c(0, sqrt(2)),
+     main = c("Single linkage", paste("Cophenetic correlation =",
+                                    round(cor(spe.ch, spe.ch.single.coph), 3))))
+abline(0, 1);  lines(lowess(spe.ch, spe.ch.single.coph), col = "red")
+
+plot(spe.ch, spe.ch.comp.coph, xlab = "Chord distance", 
+     ylab = "Cophenetic distance", asp = 1, xlim = c(0,sqrt(2)), ylim = c(0,sqrt(2)),
+     main = c("Complete linkage", paste("Cophenetic correlation =",
+                                      round(cor(spe.ch, spe.ch.comp.coph), 3))))
+abline(0, 1);  lines(lowess(spe.ch, spe.ch.comp.coph), col = "red")
+
+plot(spe.ch, spe.ch.UPGMA.coph, xlab = "Chord distance", 
+     ylab = "Cophenetic distance", asp = 1, xlim = c(0,sqrt(2)), ylim = c(0,sqrt(2)),
+     main = c("UPGMA", paste("Cophenetic correlation =",
+                           round(cor(spe.ch, spe.ch.UPGMA.coph), 3))))
+abline(0, 1);  lines(lowess(spe.ch, spe.ch.UPGMA.coph), col = "red")
+
+plot(spe.ch, spe.ch.ward.coph, xlab = "Chord distance", 
+     ylab = "Cophenetic distance", asp = 1, xlim = c(0,sqrt(2)), 
+     ylim = c(0,max(spe.ch.ward$height)),
+     main = c("Ward clustering", paste("Cophenetic correlation =",
+                                     round(cor(spe.ch, spe.ch.ward.coph), 3))))
+abline(0, 1);  lines(lowess(spe.ch, spe.ch.ward.coph), col = "red")
+
+# The best fitted method is the UPGMA, with a cophenetic correlation of .861.
+
+# Gower distance (the lower the better)------
+
+(gow.dist.single <- sum((spe.ch - spe.ch.single.coph) ^ 2))
+(gow.dist.comp <- sum((spe.ch - spe.ch.comp.coph) ^ 2))
+(gow.dist.UPGMA <- sum((spe.ch - spe.ch.UPGMA.coph) ^ 2))
+(gow.dist.ward <- sum((spe.ch - spe.ch.ward.coph) ^ 2))
+
+# The best method still is UPGMA.
+
+# 3- Choosing the final number of conglomerates.
+#  To this effect we will use three tests:
+#   a- Fussion level plot
+#   b- Silhouette plot
+#   c- Mantel value
+
+# a- Fussion level
+dev.off()
+plot(spe.ch.ward$height, nrow(spe) : 2, type = "S", 
+     main = "Fusion levels - Chord - Ward", 
+     ylab = "k (number of clusters)", xlab = "h (node height)", col = "grey")
+text(spe.ch.ward$height, nrow(spe) : 2, nrow(spe) : 2, col = "red", cex = 0.8)
+
+# By the length of the fussion line the best number of k groups must be 2 or 4.
+
+# b- Silhouette plot
+asw <- numeric(nrow(spe))
+
+for(k in 2:(nrow(spe) - 1)){
+  sil <- silhouette(cutree(spe.ch.ward, k = k), spe.ch)
+  asw[k] <- summary(sil)$avg.width}
+k.best <- which.max(asw)
+
+plot(1: nrow(spe), asw, type="h", 
+     main = "Silhouette-optimal number of clusters", 
+     xlab = "k (number of groups)", ylab = "Average silhouette width")
+axis(1, k.best, paste("optimum", k.best, sep = "\n"), col = "red", font = 2,
+     col.axis = "red")
+points(k.best, max(asw), pch = 16, col = "red", cex = 1.5)
+cat("", "Silhouette-optimal number of clusters k =", k.best, "\n", 
+    "with an average silhouette width of", max(asw), "\n")
+
+# c- Mantel value
+
+grpdist <- function(X){
+  require(cluster)
+  gr <- as.data.frame(as.factor(X))
+  distgr <- daisy(gr, "gower")
+  distgr}
+
+kt <- data.frame(k = 1:nrow(spe), r = 0)
+for(i in 2:(nrow(spe) - 1)){
+  gr <- cutree(spe.ch.ward, i)
+  distgr <- grpdist(gr)
+  mt <- cor(spe.ch, distgr, method = "pearson")
+  kt[i, 2] <- mt}
+k.best <- which.max(kt$r)
+
+plot(kt$k, kt$r, type = "h", main = "Mantel-optimal number of clusters", 
+     xlab = "k (number of groups)", ylab = "Pearson's correlation")
+axis(1, k.best, paste("optimum", k.best, sep = "\n"), col = "red", font = 2,
+     col.axis = "red")
+points(k.best, max(kt$r), pch = 16, col = "red", cex = 1.5)
+cat("", "Mantel-optimal number of clusters k =", k.best, "\n", 
+    "with a matrix linear correlation of", max(kt$r), "\n")
+
+# The first and second method tells us that the best number is k = 2. 
+# The Mantel value indicates that the number must be 4. 
+# Since the theory suggests the best number is 4, we will validate our model for k = 4.4
+
+# 4- Final validation of the model (k = 4)
+k <- 4 
+cutg <- cutree(spe.ch.ward, k = k)
+sil <- silhouette(cutg, spe.ch)
+rownames(sil) <- row.names(spe)
+
+plot(sil, main = "Silhouette plot", 
+     cex.names = 0.8, col = 2:(k + 1), nmax = 100)
+# The groups are coherent, the second group has two unclassified values though. 
+
+# 5- Final plot of our model
+# We will use the hcoplot function created by Francois Gillet (2012)
+hcoplot <- function(tree, diss, k, 
+                      title=paste("Reordered dendrogram from", deparse(tree$call), sep="\n"))
+{
+  require(gclus)
+  gr <- cutree(tree, k=k)
+  tor <- reorder.hclust(tree, diss)
+  plot(tor, hang=-1, xlab=paste(length(gr),"sites"), sub=paste(k,"clusters"), 
+       main=title)
+  so <- gr[tor$order]
+  gro <- numeric(k)
+  for (i in 1:k)
+  {
+    gro[i] <- so[1]
+    if (i<k) so <- so[so!=gro[i]]
+  }
+  rect.hclust(tor, k=k, border=gro+1, cluster=gr)
+  legend("topright", paste("Cluster",1:k), pch=22, col=2:(k+1), bty="n")
+}
+
+hcoplot(spe.ch.ward, spe.ch, k = 4)
+
+
+
+# -------------------------------------------------------- #
+## Non-Hierarchical clustering (NHC)
+# -------------------------------------------------------- #
+# This time we will make a k-mean clustering model.
+
+# 1- We have to normalize the data. This step is already done in the previous analysis.
+
+# 2- Choosing the conglomerate method.
+
+set.seed(1) 
+(spe.kmeans <- kmeans(spe.norm, centers = 4, nstart = 100)) 
+
+# We created our model with 4 groups, the same as the previous HC model.
+# Here we have the centroids of each cluster, the groups and the variance of each cluster.
+
+# 3- Choosing the number of conglomerates and validation of the model. To do this, we
+# will use the next criteria:
+#    - Calinski & Harabasz value 
+#    - Simple structure index (SSI)
+#    - Sum of squared errors (SSE)
+#    - Silhouette plot 
+
+spe.KM.cascade <- cascadeKM(spe.norm, inf.gr = 2, sup.gr = 10, iter = 100, criterion = "ssi")
+spe.KM.cascade$results 
+head(spe.KM.cascade$partition)
+plot(spe.KM.cascade, sortg = TRUE) 
+
+# The statistics are not determining. By its SSE, the best number is 2 and by its SSI is
+# 3.
+
+(spe.kmeans <- kmeans(spe.norm, centers = 3, nstart = 100)) 
+dissE <- daisy(spe.norm) 
+sk <- silhouette(spe.kmeans$cl, dissE) 
+plot(sk)
+
+# 4- Final plot and interpretation
+
+table(spe.kmeans$cluster, spebc.ward.g)
+# They only differ in just one case.
+
+clusplot(spe.norm, spe.kmeans$cluster, color = TRUE, shade = TRUE, 
+         labels = 2, lines = 0)
+
