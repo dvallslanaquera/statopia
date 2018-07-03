@@ -1,0 +1,242 @@
+---
+title: "LDA project"
+output: html_document
+---
+
+
+# Linear Discriminant Analysis (LDA)
+
+This is a method of **supervised multivariant classification** and it is one of the 
+most powerful tool a data analyst have. With this method we can look for the 
+significance of the variables and we can make predictions. 
+To make this model we need an explanatory matrix X and a response matrix Y.
+We will use the iris database as example.
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=FALSE}
+library(ade4)
+library(vegan)
+library(ellipse)
+library(mvnormtest)
+library(psych)
+library(MASS)
+library(klaR)
+data(iris)
+```
+
+```{r tables-mtcars, echo=FALSE}
+knitr::kable(iris[1:5, ], caption = 'A caption of the Iris database')
+```
+
+## 1- Standarization and exploration
+
+```{r warning=FALSE}
+iris.hle <- decostand(as.matrix(iris[1:4]), "hellinger") 
+gr <- cutree(hclust(vegdist(iris.hle, "euc"), "ward.D"), 3)
+table(gr)
+```
+We used k = 3 groups, as the theory suggests. The model classified the data in 3 gropus of similar size.
+
+
+
+## 2- Assumptions check 
+The LDA model is a parametric model, so there are assumptions to check and control.
+
+###2.1. NA values
+
+```{r}
+any(is.na(iris))
+```
+There are not any NA value.
+
+###2.2. Multivariant homogeneity 
+
+```{r warning=FALSE}
+iris.pars <- as.matrix(iris[, 1:4])
+iris.pars.d <- dist(iris.pars)
+(iris.MHV <- betadisper(iris.pars.d, gr))
+anova(iris.MHV)
+permutest(iris.MHV)
+```
+
+We can not accept the homogeneity assumption. We try to transform the data eliminating
+outlier values.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+par(mfrow = c(1, 4))
+apply(iris[1:4], 2, boxplot)
+```
+```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=FALSE}
+require(fBasics)
+```
+```{r warning=FALSE}
+skewness(iris[1:4])
+outliers::outlier(iris[2])
+which(iris[2] >= 4.1 | iris[2] < 2.2) 
+iris[c(16, 33, 34, 61), 2] <- mean(iris[,2])
+
+iris2 <- cbind(log(iris[1]), iris[2], iris[3], iris[4])
+skewness(iris2[1:4])
+```
+```{r echo=FALSE, warning=FALSE}
+apply(iris2[1:4], 2, boxplot)
+
+```
+The two first variables are skewed to the right and the third one is skewed to the left.
+```{r warning=FALSE}
+iris.pars2 <- as.matrix(iris2)
+iris.pars.d2 <- dist(iris.pars2)
+(iris.MHV2 <- betadisper(iris.pars.d2, gr))
+anova(iris.MHV2)
+permutest(iris.MHV2)
+```
+We can not accept the homogeneity of the sample even after transforming the data. In this case
+we should make a non-parametric model like a Quadratic Discriminant Analysis (QDA).
+
+###2.3. Normality 
+```{r warning=FALSE}
+par(mfrow = c(1, ncol(iris.pars2)))
+for(j in 1:ncol(iris.pars2)){
+  hist(iris.pars2[,j])}
+
+mshapiro.test(t(iris.pars2))
+```
+We can not accept the normality assumption too, due to the third and forth variables anormality.
+
+###2.4. Multicollinearity 
+```{r}
+as.dist(cor(iris.pars2))
+faraway::vif(iris.pars2)
+```
+There is one problem of multicollinearity between Petal.Length - Petal.Width. We will continue
+our analysis without the Petal.Length variable to improve the output.
+```{r}
+iris.pars3 <- iris.pars[, -3]
+```
+###2.5. Linearity
+```{r}
+psych::pairs.panels(iris[1:4], gap = 0, bg = c("red", "blue", "green")[iris$Species], pch = 21)
+```
+
+There are some non-linear relationships. We should try a KDA or K-mDA model instead. We will 
+continue with our LDA model in light of example. 
+
+
+
+##3- LDA model
+
+```{r warning=FALSE}
+iris.pars3.df <- as.data.frame(iris.pars3)
+(iris.lda <- lda(gr ~ Sepal.Length + Sepal.Width + Petal.Width, data = iris.pars3.df))
+iris.lda$count
+```
+* The formula of the model will be:
+- $LD1 = 0.653 * Sepal.Length - 2.471 * Sepal.Width + 4.975 * Petal.Width$
+- $LD2 = -0.659 * Sepal.Length + 2.819 * Sepal.Width + 1.464 * Petal.Width$
+The proporton of trace indicates that with just one LD we achive up to a 99% of discimination.
+
+```{r message=FALSE, warning=FALSE}
+library(devtools)
+# install_github("fawda123/ggord")
+library(ggord)
+```
+#### Plot 1
+```{r fig.align='center'}
+ggord(iris.lda, iris$Species)
+```
+
+####Plot 2
+```{r fig.align='center', message=FALSE, warning=FALSE}
+partimat(factor(gr) ~ Sepal.Length + Sepal.Width + Petal.Width, data = iris.pars3.df,
+         method = "lda", nplots.vert = 1)
+
+Fp <- predict(iris.lda)$x
+(iris.class <- predict(iris.lda)$class)
+```
+
+#### Plot 3
+````{r}
+par(mfrow = c(1, 1))
+plot(Fp[, 1], Fp[, 2], type = "n")
+text(Fp[, 1], Fp[, 2], row.names(iris), col = c(as.numeric(iris.class) + 1))
+abline(v = 0, lty = "dotted")
+abline(h = 0, lty = "dotted")
+for(i in 1:length(levels(as.factor(gr)))){
+  cov <- cov(Fp[gr == i, ])
+  centre <- apply(Fp[gr == i, ], 2, mean)
+  lines(ellipse(cov, centre = centre, level = 0.95))
+}
+```
+
+There are some problems between the variable 2 and 3 (versicolor and virginica species).
+
+
+
+##4- Canonic discrimination evaluation  
+###4.1. Canonic value calculation 
+```{r}
+iris.lda$svd ^ 2 
+100 * iris.lda$svd ^ 2/ sum(iris.lda$svd ^ 2) 
+```
+The first function can explain a 98% of the total variance of the sample.
+
+###4.2. Canonic correlation
+```{r}
+punt <- predict(iris.lda)$x
+summary(lm(punt ~ gr))
+```
+Our model can explain a 80% of the variance, so we can say our model can discrimate quite well.
+
+##5- Classification accuracy
+```{r}
+iris.class <- predict(iris.lda)$class
+(iris.table <- table(gr, iris.class))
+sum(diag(iris.table))/sum(iris.table)
+cohen.kappa(iris.table)
+cor.test(gr, as.numeric(iris.class), method = "kendall")
+```
+Our model could manage to classificate correctly the 94% of the data (CCR = .94). A 2% of the 
+succesful predictions were due to chance.
+
+
+##6- Crossed Validation 
+```{r}
+iris.lda.jac <- lda(gr ~ Sepal.Length + Sepal.Width + Petal.Width, data = iris.pars3.df, CV = TRUE)
+summary(iris.lda.jac)
+
+iris.jac.class <- iris.lda.jac$class
+iris.jac.table <- table(gr, iris.jac.class)
+diag(prop.table(iris.jac.table, 1))
+diag(prop.table(iris.table, 1))
+```
+The crossed model has the same success rate as the previous model. There is no improvement.
+
+
+
+##* Prediction example
+Let's try to test the prediction capability of our model.
+For instance: Sepal.Length = 5, Sepal.Width = 3.2, Petal.Length = 1.2, Petal.Width = 0.1.
+
+```{r}
+pred <- c(5, 3.2, 0.1)
+pred <- as.data.frame(t(pred))
+colnames(pred) <- colnames(iris.pars3)
+(pred.result <- predict(iris.lda, newdata = pred))
+```
+This example is a sample of setosa iris (group 1).
+
+
+#Quadratic discriminant analysis (QDA)
+
+This could be considered as the non-parametric version of the PCA. It is specially indicated with data that don't follow a normal distribution. 
+
+```{r warnings=FALSE}
+iris.qda <- qda(iris[,-5], iris[,5], CV = TRUE)
+(tqda <- table(Original = iris$Species, Prediction = iris.qda$class))
+diag(prop.table(tqda, 1))
+sum(diag(tqda))/sum(tqda)
+```
+If we use a QDA we improve the discrimination by a 4% (CCR = .98). The non-parametric model is better since we could not accept the homocedasticity and normality assumptions. 
+```{r warnings=FALSE, fig.align='center'}
+partimat(factor(gr) ~ Sepal.Length + Sepal.Width + Petal.Width, data = iris.pars3.df,
+         method = "qda", nplots.vert = 1)
+```

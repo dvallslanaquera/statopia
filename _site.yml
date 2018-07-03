@@ -1,0 +1,10 @@
+name: "Statopia"
+navbar:
+  title: "Statopia"
+  left:
+    - text: "Home"
+      href: index.html
+    - text: "About"
+      href: about.html
+    - text: "LDA model"
+      href: LDA.html
