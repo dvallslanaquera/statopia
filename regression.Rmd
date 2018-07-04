@@ -3,14 +3,7 @@ title: "regression"
 output: html_document
 ---
 
-# Advanced linear regression models
-
-The non-parametric regression models we can create are:
-1- GLM
-
-
-
-
+# General Linear Model 
 
 
 # Poisson Model
@@ -23,18 +16,19 @@ along a roadway in Portugal (Zuur et al. 2013).
 We will take one explanatory variable into account for our analysis. We want to
 associate the distance to a park with the number of total roadkills (D.PARK).
 
-```{r}
-RK <- read.table("RoadKills.txt", header = TRUE)
-head(RK)
-str(RK)
+```{r echo=FALSE}
+RK <- read.table("C:/Users/David/Desktop/statopia.github.io/statopia/RoadKills.txt", header = TRUE)
 
 plot(RK$D.PARK, RK$TOT.N, 
      xlab = "Distance to the park", ylab = "Roadkills")
 ```
+```{r}
+knitr::kable(RK[1:10,])
+```
 
 The data clearly presents a **Poisson distribution**. 
 
-## A- Creation of the GLM model
+## 1. Creation of the GLM model
 
 ```{r}
 M1 <- glm(TOT.N ~ D.PARK, family = poisson, data = RK) 
@@ -46,7 +40,7 @@ The slope and the intercept of the model are statistically significants (p < 0.0
 The AIC value is 634.29 (we'll need it to compare it with other models in the future).
 We can explain a 63% of the variance with our GLM model. 
 
-## B- Plotting the model
+## 2. Plotting the model
 
 ```{r}
 MyData <- data.frame(D.PARK = seq(from = 0, to = 25000, by = 1000))
@@ -58,6 +52,174 @@ FSELOW <- exp(G$fit - 1.96 * G$se.fit)
 plot(RK$D.PARK, RK$TOT.N, 
      xlab = "Distance to the park", ylab = "Killroads")
 lines(MyData$D.PARK, Fi,lty = 1)
-lines(MyData$D.PARK, FSEUP ,lty = 2)
-lines(MyData$D.PARK, FSELOW,lty = 2)
+lines(MyData$D.PARK, FSEUP, lty = 2, col = "grey")
+lines(MyData$D.PARK, FSELOW, lty = 2, col = "grey")
 ```
+
+## 3. Variable selection
+First of all, we have to transform the variables which has outliers. We will use
+a square transformation. Then, we will create a GLM model with a Poisson distribution
+without interactions
+
+```{r}
+RK$SQ.POLIC <- sqrt(RK$POLIC)
+RK$SQ.WATRES <- sqrt(RK$WAT.RES)
+RK$SQ.LPROAD <- sqrt(RK$L.P.ROAD)
+RK$SQ.SHRUB <- sqrt(RK$SHRUB)
+RK$SQ.DWATCOUR <- sqrt(RK$D.WAT.COUR)
+
+M2 <- glm(TOT.N ~ OPEN.L + MONT.S + SQ.POLIC +
+          SQ.SHRUB + SQ.WATRES + L.WAT.C + SQ.LPROAD +
+          SQ.DWATCOUR + D.PARK, family = poisson, data = RK)
+summary(M2)
+```
+
+There are no significant variables. In order to decide which variables we have to 
+eliminate we will use two kinds of selections:
+1. Step method using both forward and step methods
+2. Manual analysis
+
+### 3.1. Step method
+1. Forward
+
+```{r}
+summary(step(M2, trace = 0))
+```
+
+2. Drop
+
+```{r}
+drop1(M2, test = "Chi")
+```
+
+We should eliminate the SQ.DWATCOUR variable.
+
+```{r}
+M2b<-glm(TOT.N~OPEN.L + MONT.S + SQ.POLIC +
+           SQ.SHRUB + SQ.WATRES + L.WAT.C + SQ.LPROAD+
+           D.PARK, family = poisson, data = RK)
+summary(M2b)
+```
+
+Now all the variables are statiscally significants.
+
+### 3.2. Manual analysis
+
+```{r}
+anova(M2, M2b, test = "Chi")
+```
+
+There are no significant differences between the two models (p=0.132, Dif deviance=2.269) 
+We will continue our analysis with the model without the SQ.DWATCOUR variable, since
+this is the most parsimonious model.
+
+```´r
+M3 <- glm(TOT.N ~ MONT.S + SQ.POLIC + D.PARK +
+            SQ.SHRUB + SQ.WATRES + L.WAT.C + SQ.LPROAD +
+            SQ.DWATCOUR, family = poisson, data = RK)
+anova(M2, M3, test = "Chi")
+```
+
+## 4- Overdispersion
+This problem happens when the variance is greater than the mean. A value greater than
+1 would mean a problem.
+
+```{r}
+270.23/42
+```
+
+## 5- Validation
+
+```{r}
+op <- par(mfrow = c(2, 2))
+plot(M2b)
+
+EP <- resid(M2b, type = "pearson")
+ED <- resid(M2b, type = "deviance")
+par(op)
+
+mu <- predict(M2b, type = "response")
+E <- RK$TOT.N - mu
+EP2 <- E/sqrt(6.337209 * mu)
+
+op <- par(mfrow=c(2,2))
+plot(x = mu, y = E, main = "Response residuals")
+plot(x = mu, y = EP, main = "Pearson residuals")
+plot(x = mu, y = EP2, main = "Pearson residuals scaled")
+plot(x = mu, y = ED, main = "Deviance residuals")
+par(op)
+```
+
+We observe an anormal ditribution of the residuals. Probably this is due to the
+overdispersion problem. We try to fix it with another distribution: the negative binomial.
+
+
+# Binomial negative distribution
+
+## 1- Model creation
+
+```{r}
+library(MASS)
+M6 <- glm.nb(TOT.N ~ OPEN.L + MONT.S + SQ.POLIC +
+             SQ.SHRUB + SQ.WATRES + L.WAT.C + SQ.LPROAD +
+             SQ.DWATCOUR + D.PARK, link = "log", data = RK)
+summary(M6, cor = FALSE)
+```
+
+## 2- Variables selection
+### 2.1. Step method
+
+```{r}
+summary(step(M6, trace = 0))
+summary(stepAIC(M6, trace = 0))
+```
+
+Both methods suggets the variables OPEN.L, L.WAT.C, SQ.LPROAD y D.PARK. The variable SQ.LPROAD is not significant and L.WAT.C is slightly significant. 
+
+### 2.2. Drop method
+
+```{r}
+M7 <- glm.nb(TOT.N ~ OPEN.L + L.WAT.C + SQ.LPROAD + D.PARK, link = "log", data = RK)
+drop1(M7, test = "Chi")
+```
+
+We should eliminate both variables to improve our model.
+
+### 2.3. Manual analysis
+
+```{r}
+M7b <- glm.nb(TOT.N ~ OPEN.L + L.WAT.C + D.PARK,link = "log", data = RK)
+M7c <- glm.nb(TOT.N ~ OPEN.L + D.PARK, link = "log", data = RK)
+anova(M7b, M7c)
+```
+
+## 3- Overdispersion
+
+```{r}
+summary(M7c)
+51.839/49
+```
+
+Close to 1, so it is not supposed to be a problem.
+
+
+## 4- Validation
+
+```{r}
+M8 <- glm.nb(TOT.N ~ OPEN.L + D.PARK, link = "log", data = RK)
+summary(M8)
+drop1(M8, test = "Chi")
+```
+
+Both variables are significant.
+
+```{r}
+par(mfrow = c(2, 2))
+plot(M8)
+```
+
+There is no problem with the model.
+
+## 5- Interpretation
+The farther from the park (D.PARK), the lesser the number of roadkills (TOT.N).
+In addition to this, the open spaces (OPEN.L) are significantly the safest.

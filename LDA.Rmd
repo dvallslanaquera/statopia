@@ -12,7 +12,7 @@ significance of the variables and we can make predictions.
 To make this model we need an explanatory matrix X and a response matrix Y.
 We will use the iris database as example.
 
-![](https://www.google.co.jp/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=2ahUKEwiEiMrDs4TcAhXZc94KHa0DA_oQjRx6BAgBEAU&url=https%3A%2F%2Fwww.palass.org%2Fpublications%2Fnewsletter%2Fpalaeomath-101%2Fpalaeomath-part-10-groups-i&psig=AOvVaw1xACKJnOklPvq1RMLEUeM3&ust=1530757854877316)
+![Iris](https://www.google.co.jp/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=2ahUKEwiEiMrDs4TcAhXZc94KHa0DA_oQjRx6BAgBEAU&url=https%3A%2F%2Fwww.palass.org%2Fpublications%2Fnewsletter%2Fpalaeomath-101%2Fpalaeomath-part-10-groups-i&psig=AOvVaw1xACKJnOklPvq1RMLEUeM3&ust=1530757854877316)
 
 ```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=FALSE}
 library(ade4)
@@ -63,8 +63,8 @@ permutest(iris.MHV)
 We can not accept the homogeneity assumption. We try to transform the data eliminating
 outlier values.
 
-```{r echo=FALSE}
-par(mfrow = c(1, 4))
+```{r echo=FALSE, fig.height=15}
+par(mfrow = c(4, 1))
 boxplot(iris[1], iris[2], main = "Sepal.Width vs. Sepal.Length", col = "red", horizontal = TRUE)
 boxplot(iris[2], iris[3], main = "Petal.Length vs. Sepal.Width", col = "blue", horizontal = TRUE)
 boxplot(iris[3], iris[4], main = "Petal.Width vs. Petal.Length", col = "green", horizontal = TRUE)
@@ -82,12 +82,12 @@ iris[c(16, 33, 34, 61), 2] <- mean(iris[,2])
 iris2 <- cbind(log(iris[1]), iris[2], iris[3], iris[4])
 skewness(iris2[1:4])
 ```
-```{r echo=FALSE, warning=FALSE}
-par(mfrow = c(1, 4))
-boxplot(iris2[1], iris2[2], main = "Sepal.Width vs. Sepal.Length", col = "red")
-boxplot(iris2[2], iris2[3], main = "Petal.Length vs. Sepal.Width", col = "blue")
-boxplot(iris2[3], iris2[4], main = "Petal.Width vs. Petal.Length", col = "green")
-boxplot(iris2[1], iris2[4], main = "Sepal.Length vs. Petal.Width", col = "yellow")
+```{r echo=FALSE, warning=FALSE, fig.height=15}
+par(mfrow = c(4, 1))
+boxplot(iris2[1], iris2[2], main = "Sepal.Width vs. Sepal.Length", col = "red", horizontal = TRUE)
+boxplot(iris2[2], iris2[3], main = "Petal.Length vs. Sepal.Width", col = "blue", horizontal = TRUE)
+boxplot(iris2[3], iris2[4], main = "Petal.Width vs. Petal.Length", col = "green", horizontal = TRUE)
+boxplot(iris2[1], iris2[4], main = "Sepal.Length vs. Petal.Width", col = "yellow", horizontal = TRUE)
 
 ```
 
