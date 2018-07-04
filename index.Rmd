@@ -1,6 +1,0 @@
----
-title: "Statopia"
-output: html_document
----
-
-
