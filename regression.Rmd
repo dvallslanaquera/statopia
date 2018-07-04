@@ -17,7 +17,7 @@ We will take one explanatory variable into account for our analysis. We want to
 associate the distance to a park with the number of total roadkills (D.PARK).
 
 ```{r echo=FALSE}
-RK <- read.table("C:/Users/David/Desktop/statopia.github.io/statopia/RoadKills.txt", header = TRUE)
+RK <- read.table("C:/Users/David/Desktop/statopia.github.io/statopia/archives/RoadKills.txt", header = TRUE)
 
 plot(RK$D.PARK, RK$TOT.N, 
      xlab = "Distance to the park", ylab = "Roadkills")
