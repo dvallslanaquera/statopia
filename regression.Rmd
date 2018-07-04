@@ -1,0 +1,63 @@
+---
+title: "regression"
+output: html_document
+---
+
+# Advanced linear regression models
+
+The non-parametric regression models we can create are:
+1- GLM
+
+
+
+
+
+
+# Poisson Model
+
+For modelling the number of times an event occurs in an interval of time or space.
+like number of people, number of cases, and so forth. 
+
+To create our model we will use the total number of roadkills of amphibious 
+along a roadway in Portugal (Zuur et al. 2013).
+We will take one explanatory variable into account for our analysis. We want to
+associate the distance to a park with the number of total roadkills (D.PARK).
+
+```{r}
+RK <- read.table("RoadKills.txt", header = TRUE)
+head(RK)
+str(RK)
+
+plot(RK$D.PARK, RK$TOT.N, 
+     xlab = "Distance to the park", ylab = "Roadkills")
+```
+
+The data clearly presents a **Poisson distribution**. 
+
+## A- Creation of the GLM model
+
+```{r}
+M1 <- glm(TOT.N ~ D.PARK, family = poisson, data = RK) 
+summary(M1)
+100 * (1071.4 - 390.9)/ 1071.4
+```
+
+The slope and the intercept of the model are statistically significants (p < 0.001).
+The AIC value is 634.29 (we'll need it to compare it with other models in the future).
+We can explain a 63% of the variance with our GLM model. 
+
+## B- Plotting the model
+
+```{r}
+MyData <- data.frame(D.PARK = seq(from = 0, to = 25000, by = 1000))
+G <- predict(M1, newdata = MyData, type = "link", se = TRUE)
+Fi <- exp(G$fit)
+
+FSEUP <- exp(G$fit + 1.96 * G$se.fit)
+FSELOW <- exp(G$fit - 1.96 * G$se.fit)
+plot(RK$D.PARK, RK$TOT.N, 
+     xlab = "Distance to the park", ylab = "Killroads")
+lines(MyData$D.PARK, Fi,lty = 1)
+lines(MyData$D.PARK, FSEUP ,lty = 2)
+lines(MyData$D.PARK, FSELOW,lty = 2)
+```

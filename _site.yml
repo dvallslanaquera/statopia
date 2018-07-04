@@ -6,8 +6,7 @@ navbar:
       href: index.html
     - text: "About"
       href: about.html
-    - text: "MOdels"
-      icon: fa-gear
+    - text: "Models"
       menu:
         - text: "Multivariant models"
         - text: "LDA model"
@@ -15,8 +14,6 @@ navbar:
         - text: "Clustering models"
           href: Clustering.html
         - text: "---------"
-        - text: "Heading 2"
-        - text: "Page C"
-          href: page_c.html
-        - text: "Page D"
-          href: page_d.html
+        - text: "Univariant models"
+        - text: "Advanced regression models"
+          href: regression.html

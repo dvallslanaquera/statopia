@@ -11,7 +11,7 @@
 
 
 
-<title>Statopia</title>
+<title>regression</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -219,12 +219,82 @@ $(document).ready(function () {
 
 
 
-<h1 class="title toc-ignore">Statopia</h1>
+<h1 class="title toc-ignore">regression</h1>
 
 </div>
 
 
-
+<div id="advanced-lineal-regression-models" class="section level3">
+<h3>ADVANCED LINEAL REGRESSION MODELS</h3>
+</div>
+<div id="section" class="section level1">
+<h1>————————————————————————</h1>
+</div>
+<div id="glm" class="section level1">
+<h1>1- GLM</h1>
+</div>
+<div id="section-1" class="section level1">
+<h1></h1>
+</div>
+<div id="section-2" class="section level1">
+<h1></h1>
+</div>
+<div id="section-3" class="section level1">
+<h1></h1>
+</div>
+<div id="section-4" class="section level1">
+<h1></h1>
+</div>
+<div id="section-5" class="section level1">
+<h1>————————————————————————</h1>
+<div id="poisson-model" class="section level3">
+<h3>Poisson Model</h3>
+</div>
+</div>
+<div id="section-6" class="section level1">
+<h1>————————————————————————</h1>
+</div>
+<div id="for-modelling-the-number-of-times-an-event-occurs-in-an-interval-of-time-or-space." class="section level1">
+<h1>- For modelling the number of times an event occurs in an interval of time or space.</h1>
+</div>
+<div id="like-number-of-people-number-of-cases-and-so-forth." class="section level1">
+<h1>like number of people, number of cases, and so forth.</h1>
+</div>
+<div id="to-create-our-model-we-will-use-the-total-number-of-roadkills-of-amphibious" class="section level1">
+<h1>To create our model we will use the total number of roadkills of amphibious</h1>
+</div>
+<div id="along-a-roadway-in-portugal-zuur-et-al.-2013." class="section level1">
+<h1>along a roadway in Portugal (Zuur et al. 2013).</h1>
+</div>
+<div id="we-will-take-one-explanatory-variable-into-account-for-our-analysis.-we-want-to" class="section level1">
+<h1>We will take one explanatory variable into account for our analysis. We want to</h1>
+</div>
+<div id="associate-the-distance-to-a-park-with-the-number-of-total-roadkills-d.park." class="section level1">
+<h1>associate the distance to a park with the number of total roadkills (D.PARK).</h1>
+<p>RK &lt;- read.table(“RoadKills.txt”, header = TRUE) head(RK) str(RK)</p>
+<p>plot(RK<span class="math inline">\(D.PARK, RK\)</span>TOT.N, xlab = “Distance to the park”, ylab = “Roadkills”)</p>
+</div>
+<div id="the-data-clearly-presents-a-poisson-distribution." class="section level1">
+<h1>The data clearly presents a Poisson distribution.</h1>
+</div>
+<div id="a--creation-of-the-glm-model" class="section level1">
+<h1>A- Creation of the GLM model</h1>
+<p>M1 &lt;- glm(TOT.N ~ D.PARK, family = poisson, data = RK) summary(M1) 100 * (1071.4 - 390.9)/ 1071.4</p>
+</div>
+<div id="the-slope-and-the-intercept-of-the-model-are-statistically-significants-p-0.001." class="section level1">
+<h1>The slope and the intercept of the model are statistically significants (p &lt; 0.001).</h1>
+</div>
+<div id="the-aic-value-is-634.29-well-need-it-to-compare-it-with-other-models-in-the-future." class="section level1">
+<h1>The AIC value is 634.29 (we’ll need it to compare it with other models in the future).</h1>
+</div>
+<div id="we-can-explain-a-63-of-the-variance-with-our-glm-model." class="section level1">
+<h1>We can explain a 63% of the variance with our GLM model.</h1>
+</div>
+<div id="b--plotting-the-model" class="section level1">
+<h1>B- Plotting the model</h1>
+<p>MyData &lt;- data.frame(D.PARK = seq(from = 0, to = 25000, by = 1000)) G &lt;- predict(M1, newdata = MyData, type = “link”, se = TRUE) Fi &lt;- exp(G$fit)</p>
+<p>FSEUP &lt;- exp(G<span class="math inline">\(fit + 1.96 * G\)</span>se.fit) FSELOW &lt;- exp(G<span class="math inline">\(fit - 1.96 * G\)</span>se.fit) plot(RK<span class="math inline">\(D.PARK, RK\)</span>TOT.N, xlab = “Distance to the park”, ylab = “Killroads”) lines(MyData<span class="math inline">\(D.PARK, Fi,lty = 1) lines(MyData\)</span>D.PARK, FSEUP ,lty = 2) lines(MyData$D.PARK, FSELOW,lty = 2)</p>
+</div>
 
 
 

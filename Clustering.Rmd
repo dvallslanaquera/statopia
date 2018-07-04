@@ -12,8 +12,9 @@ they are interrelated .
  
 As example, we will use the Doubs database, based on a sample of fish from the
 Doubs river in France. 
+![](https://www.google.co.jp/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=2ahUKEwinrJSzs4TcAhXRMt4KHdL9BhUQjRx6BAgBEAU&url=https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FDoubs_(river)&psig=AOvVaw03fFZN7MoaB0cPY2agXzJO&ust=1530757814912338)
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 library(ade4)
 library(vegan)
 library(gclus)
@@ -36,6 +37,7 @@ spe.norm <- decostand(spe, "normalize")
 spe.ch <- vegdist(spe.norm, "euc") 
 ```
 
+
 # 2- Choosing the clustering method.
 ```{r echo=FALSE}
 par(mfrow = c(2, 3)) 
@@ -45,42 +47,42 @@ par(mfrow = c(2, 3))
 
 ```{r}
 spe.ch.single <- hclust(spe.ch, method = "single") 
-plot(spe.ch.single)
+plot(spe.ch.single, sub = "Single method")
 ```
 
 ### Complete method
 
 ```{r}
 spe.ch.complete <- hclust(spe.ch, method = "complete")
-plot(spe.ch.complete) 
+plot(spe.ch.complete, sub = "Complete method") 
 ```
 
 ### UPGMA method
 
 ```{r}
 spe.ch.UPGMA <- hclust(spe.ch, method = "average") 
-plot(spe.ch.UPGMA)
+plot(spe.ch.UPGMA, sub = "UPGMA method")
 ```
 
 ### Centroid method
 
 ```{r}
 spe.ch.centroid <- hclust(spe.ch, method = "centroid") 
-plot(spe.ch.centroid)
+plot(spe.ch.centroid, sub = "Centroid method")
 ```
 
 ### Ward method
 
 ```{r}
 spe.ch.ward <- hclust(spe.ch, method = "ward.D") 
-plot(spe.ch.ward)
+plot(spe.ch.ward, sub = "Ward method")
 ```
 
 ### Squared transformation
 
 ```{r}
 spe.ch.ward$height <- sqrt(spe.ch.ward$height)
-plot(spe.ch.ward)
+plot(spe.ch.ward, sub = "Squared height method")
 ```
 
 
@@ -94,16 +96,16 @@ to calculate:
 
 ```{r}
 spe.ch.single.coph <- cophenetic(spe.ch.single) # Single
-cor(spe.ch, spe.ch.single.coph)
+paste("Single cophenetic:", cor(spe.ch, spe.ch.single.coph))
 
 spe.ch.comp.coph <- cophenetic(spe.ch.complete) # Complete
-cor(spe.ch, spe.ch.comp.coph)
+paste("Complete cophenetic:", cor(spe.ch, spe.ch.comp.coph))
 
 spe.ch.UPGMA.coph <- cophenetic(spe.ch.UPGMA) # Average
-cor(spe.ch, spe.ch.UPGMA.coph)
+paste("UPGMA cophenetic:", cor(spe.ch, spe.ch.UPGMA.coph))
 
 spe.ch.ward.coph <- cophenetic(spe.ch.ward) # Ward 
-cor(spe.ch, spe.ch.ward.coph)
+paste("Ward cophenetic:", cor(spe.ch, spe.ch.ward.coph))
 
 cor(spe.ch, spe.ch.ward.coph, method = "spearman")
 ```
@@ -150,6 +152,7 @@ The best fitted method is the **UPGMA**, with a cophenetic correlation of .861.
 ```
 
 The best method still is UPGMA.
+
 
 ## 3- Choosing the final number of conglomerates.
 To this effect we will use three tests:
@@ -234,7 +237,8 @@ plot(sil, main = "Silhouette plot",
 
 The groups are coherent, the second group has two unclassified values though. 
 
-## 5- Final plot of our model
+
+## 5- Final plot 
 We will use the hcoplot function created by Francois Gillet (2012)
 
 ```{r}
@@ -270,7 +274,7 @@ This time we will make a k-mean clustering model.
 
 - 2- Choosing the conglomerate method.
 
-```{r}
+```{r warning=FALSE}
 set.seed(1) 
 (spe.kmeans <- kmeans(spe.norm, centers = 4, nstart = 100)) 
 ```
@@ -278,8 +282,8 @@ set.seed(1)
 We created our model with 4 groups, the same as the previous HC model.
 Here we have the centroids of each cluster, the groups and the variance of each cluster.
 
-## 3- Choosing the number of conglomerates and validation of the model. To do this, we
-will use the next criteria:
+## 3- Choosing the number of conglomerates and validation of the model. 
+To do this, we will use the next criteria:
  - Calinski & Harabasz value 
  - Simple structure index (SSI)
  - Sum of squared errors (SSE)
@@ -305,6 +309,7 @@ plot(sk)
 ## 4- Final plot and interpretation
 
 ```{r}
+spebc.ward.g<-cutree(spe.ch.ward,k=4)
 table(spe.kmeans$cluster, spebc.ward.g)
 ```
 
