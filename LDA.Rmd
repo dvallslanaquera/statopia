@@ -61,9 +61,12 @@ permutest(iris.MHV)
 We can not accept the homogeneity assumption. We try to transform the data eliminating
 outlier values.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+```{r echo=FALSE}
 par(mfrow = c(1, 4))
-apply(iris[1:4], 2, boxplot)
+boxplot(iris[1], iris[2], main = "Sepal.Width vs. Sepal.Length", col = "red")
+boxplot(iris[2], iris[3], main = "Petal.Length vs. Sepal.Width", col = "blue")
+boxplot(iris[3], iris[4], main = "Petal.Width vs. Petal.Length", col = "green")
+boxplot(iris[1], iris[4], main = "Sepal.Length vs. Petal.Width", col = "yellow")
 ```
 ```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=FALSE}
 require(fBasics)
@@ -78,9 +81,14 @@ iris2 <- cbind(log(iris[1]), iris[2], iris[3], iris[4])
 skewness(iris2[1:4])
 ```
 ```{r echo=FALSE, warning=FALSE}
-apply(iris2[1:4], 2, boxplot)
+par(mfrow = c(1, 4))
+boxplot(iris2[1], iris2[2], main = "Sepal.Width vs. Sepal.Length", col = "red")
+boxplot(iris2[2], iris2[3], main = "Petal.Length vs. Sepal.Width", col = "blue")
+boxplot(iris2[3], iris2[4], main = "Petal.Width vs. Petal.Length", col = "green")
+boxplot(iris2[1], iris2[4], main = "Sepal.Length vs. Petal.Width", col = "yellow")
 
 ```
+
 The two first variables are skewed to the right and the third one is skewed to the left.
 ```{r warning=FALSE}
 iris.pars2 <- as.matrix(iris2)
@@ -129,12 +137,13 @@ iris.pars3.df <- as.data.frame(iris.pars3)
 (iris.lda <- lda(gr ~ Sepal.Length + Sepal.Width + Petal.Width, data = iris.pars3.df))
 iris.lda$count
 ```
-* The formula of the model will be:
+The formula of the model will be:
 - $LD1 = 0.653 * Sepal.Length - 2.471 * Sepal.Width + 4.975 * Petal.Width$
 - $LD2 = -0.659 * Sepal.Length + 2.819 * Sepal.Width + 1.464 * Petal.Width$
-The proporton of trace indicates that with just one LD we achive up to a 99% of discimination.
 
-```{r message=FALSE, warning=FALSE}
+The proporton of trace indicates that with just one LD we achive up to **a 99% of discimination**.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
 library(devtools)
 # install_github("fawda123/ggord")
 library(ggord)

@@ -6,5 +6,17 @@ navbar:
       href: index.html
     - text: "About"
       href: about.html
-    - text: "LDA model"
-      href: LDA.html
+    - text: "MOdels"
+      icon: fa-gear
+      menu:
+        - text: "Multivariant models"
+        - text: "LDA model"
+          href: LDA.html
+        - text: "Clustering models"
+          href: Clustering.html
+        - text: "---------"
+        - text: "Heading 2"
+        - text: "Page C"
+          href: page_c.html
+        - text: "Page D"
+          href: page_d.html
