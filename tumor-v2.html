@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>Glioblastoma cancer clustering EDA</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="styles.css" type="text/css" />
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">My website</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+<li>
+  <a href="tumor v2.html">Tumor analysis</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Glioblastoma cancer clustering EDA</h1>
+
+</div>
+
+
+<p>Glioblastoma is the most deadly type of brain cancer. Usually affects 50 and 70 year old population, and it is one of the fastest growing cancer since it affects the brain glia cells (often fast-growing and invasive). This time we will try to create a clustering and hierarchichal classification of patients.</p>
+<div id="collecting-data" class="section level1">
+<h1>1. Collecting data</h1>
+<p>We will use the public database from Columbia University:</p>
+<p>Here we have a 42x10 database. It is rather a small sample, but we can make a good classification model with it.</p>
+</div>
+<div id="preprocessing" class="section level1">
+<h1>2. Preprocessing</h1>
+<p>Some problems with the original database can be observed. There are too many factorial strings and just two columns of integers (<code>survival_days</code> and <code>initial_kps</code>). We have to convert them into numeric columns in order to continue our analysis properly:</p>
+<pre class="r"><code>tumor$age_in_years &lt;- tumor$age_in_years %&gt;% 
+  gsub(pattern = &quot; yrs&quot;, replacement = &quot;&quot;) %&gt;% 
+  as.numeric()
+
+# Some columns to numeric 
+tumor &lt;- as.data.frame(tumor)
+ind &lt;- c(&#39;extent_of_resection&#39;, &#39;surgery&#39;, &#39;mgmt_methylation&#39;, &#39;egfr_amplification&#39;)
+tumor[ind] &lt;- lapply(tumor[ind], as.numeric)</code></pre>
+<p>Now we have to deal with missing values in the <code>survival_days</code> variable. We have four options here:</p>
+<ul>
+<li>Remove the values.</li>
+<li>Fill it with correlation values.</li>
+<li>Fill it exploring the similarity between variables.</li>
+<li>Use tools to handle those values.</li>
+</ul>
+<p>In first instance, let’s explore the correlation method. To this effect we have to assess whether there are significant correlations or not.</p>
+<pre class="r"><code>tumor_m &lt;- tumor %&gt;% 
+              filter(!is.na(survival_days)) %&gt;% 
+              select(-1, -2, -3)
+
+# Correlation matrix
+tumor_cor &lt;- as.matrix(cor(tumor_m, use = &#39;complete.obs&#39;))
+
+# Get lower triangle of the correlation matrix
+lower_tri&lt;-function(x){
+  x[upper.tri(x)] &lt;- NA
+  return(x)
+}
+
+# Draw the correlation plot
+tumor_cor %&gt;% 
+  lower_tri() %&gt;% 
+  melt() %&gt;%
+  ggplot(aes(x = Var1, y = Var2, fill = value)) +
+    geom_tile() +
+    geom_text(aes(label = round(value, 2))) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          axis.title = element_blank(),
+          panel.grid.major = element_blank(),
+          legend.justification = c(1, 0),
+          legend.position = c(0.4, 0.7),
+          legend.direction = &quot;horizontal&quot;,
+          plot.title = element_text(size = 20)) +
+    labs(fill = &#39;Pearson\nCorrelation&#39;) +
+    scale_y_discrete(position = &quot;right&quot;) +
+    scale_fill_gradient2(low = &#39;red&#39;, mid = &#39;white&#39;, high = &#39;steelblue&#39;, na.value = NA,
+                         midpoint = 0, limit = c(-1, 1)) +
+    ggtitle(&#39;Correlation Matrix&#39;, subtitle = &#39;Tumor database&#39;)</code></pre>
+<p><img src="tumor-v2_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>There are quit few significant correlations. In this scenario is quite hard to create a good predictive model. Let’s explore a bit further the relation between mgmt_methylation and survival_days since that’s the highest correlation.</p>
+<pre class="r"><code>tumor_m %&gt;% 
+  ggplot(aes(mgmt_methylation, survival_days)) +
+    geom_point() + 
+    geom_smooth(method = &#39;lm&#39;, se = FALSE, size = 2) +
+    theme_bw() +
+    theme(plot.title = element_text(size = 20)) +
+    ggtitle(&#39;MGMT Methylation vs. Survival Days&#39;,
+            subtitle = &#39;r = 0.43&#39;)</code></pre>
+<p><img src="tumor-v2_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>It seems the higher the MGMT Methylation index, the higher the probability to survive over 2 years since the moment the cancer is diagnosed. However, the sample size is too small to conclude that this correlation is strong enough.</p>
+<pre class="r"><code>tumor %&gt;% 
+  ggplot(aes(survival_days)) +
+    geom_density(fill = &#39;steelblue&#39;, color = &#39;darkblue&#39;, size = 1.2) +
+    geom_vline(aes(xintercept = mean(survival_days, na.rm = T)), size = 2, colour = &#39;red&#39;, 
+               lty = &#39;dashed&#39;) +
+    geom_vline(aes(xintercept = median(survival_days, na.rm = T)), size = 2, colour = &#39;orange&#39;, 
+               lty = &#39;dashed&#39;) +
+    theme_bw() +
+    theme(plot.title = element_text(size = 20),
+          axis.title.y = element_blank()) +
+    labs(x = &#39;# of survival days&#39;) +
+    ggtitle(&#39;Survival Days Density Plot&#39;, 
+            subtitle = &#39;Mean: 495.5 days\nMedian: 439.5&#39;) </code></pre>
+<p><img src="tumor-v2_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>The distribution doesn’t follow a normal distribution. This could be due to the small size of the sample, so we should use a non-parametric model to fit the data if we want to predict the number of survival days.</p>
+<pre class="r"><code># Create a boxplot with all numeric variables
+tumor %&gt;% 
+  gather(key, num, extent_of_resection:age_in_years) %&gt;% 
+  ggplot(aes(y = num, col = key)) +
+    geom_boxplot() +
+    theme_bw() +
+    labs(col = &#39;Variables&#39;, y = &#39;&#39;) +
+    facet_wrap(~ key, scale = &#39;free_y&#39;)</code></pre>
+<pre><code>## Warning: Removed 10 rows containing non-finite values (stat_boxplot).</code></pre>
+<p><img src="tumor-v2_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>With all these boxplots we can make a profile of the standard glioblastoma: an adult between 50 - 65 years old, with no remarkable problem with his daily life and who has a survival expectancy between 300 - 700 days, with some unusual cases of long survival rate. Most of them go through one surgery, with an average initial KPS of 90.</p>
+</div>
+
+<p>Copyright &copy; 2019 David Valls Lanaquera All rights reserved </p>
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

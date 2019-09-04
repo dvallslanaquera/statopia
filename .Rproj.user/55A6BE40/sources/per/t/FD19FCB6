@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1567592457008.000,
+    "dirty" : false,
+    "encoding" : "ISO8859-1",
+    "folds" : "",
+    "hash" : "3364010784",
+    "id" : "FD19FCB6",
+    "lastKnownWriteTime" : 1567592798,
+    "last_content_update" : 1567592798467,
+    "path" : "C:/Users/hp/Desktop/f/Statopia/tumor.Rmd",
+    "project_path" : "tumor.Rmd",
+    "properties" : {
+        "cursorPosition" : "6,61",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}
