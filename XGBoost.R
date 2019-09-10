@@ -160,18 +160,18 @@ hyper_grid %>%
 
 # Definitive model
 params_final <- list(
-  eta = 0.3,
-  gamma = 1.2, 
-  max_depth = 3, 
+  eta = 0.05,
+  gamma = 1.5, 
+  max_depth = 5, 
   min_child_weight = 1,
-  subsample = 1,
+  subsample = 0.8,
   colsample_bytree = .9
 )
 
 xgb.fit <- xgb.cv(
   params = params_final,
-  data = data.matrix(train3[,-1]),
-  label = train3[,1],
+  data = data.matrix(train_m[,-1]),
+  label = train_m[,1],
   nrounds = 500,
   nfold = 5,
   objective = 'binary:logistic',
@@ -180,10 +180,12 @@ xgb.fit <- xgb.cv(
   print_every_n = 100
 )
 
+# Train error: 0.13, test error: 0.17
+
 xgb.fit <- xgboost(
   params = params_final,
-  data = data.matrix(train3[,-1]),
-  label = train3[,1],
+  data = data.matrix(train_m[,-1]),
+  label = train_m[,1],
   nrounds = 500,
   nfold = 5,
   objective = 'binary:logistic',
@@ -198,7 +200,7 @@ xgb.fit <- xgboost(
 x1s <- seq(2, 5, length.out = 100)
 x2s <- seq(1, 3, length.out = 100)
 g <- data.frame(x1 = rep(x1s, each=100), x2 = rep(x2s, time = 100))
-p <- predict(xgb.fit,newdata=data.matrix(g[,c('x1','x2')]))
+p <- predict(xgb.fit,newdata=data.matrix(train_m[,c('x1','x2')]))
 g$y <- ifelse(p>=0.90,1,0)
 g1 <- ggplot(data=dataTest[dataTest$x1>2 & dataTest$x1<5 & dataTest$x2>1 & dataTest$x2<3,]) +
   xlim(2,5) + ylim(1,3) +
@@ -222,55 +224,3 @@ for (i in which(dataTest$p==1)){
                       ,color='darkblue',size=4)
 }
 g1
-
-
-####### CODE SNIPPET 2
-
-y = dtrain[,1]
-
-train = as.matrix(dtrain[,-1])
-
-test = as.matrix(dtest)
-
-GS_LogLoss = data.frame("Rounds" = numeric(), 
-                        "Depth" = numeric(),
-                        "r_sample" = numeric(),
-                        "c_sample" = numeric(), 
-                        "minLogLoss" = numeric(),
-                        "best_round" = numeric())
-
-for (rounds in seq(100, 1000, 50)){
-  
-  for (depth in c(4, 6, 8, 10)) {
-    
-    for (r_sample in c(0.5, 0.75, 1)) {
-      
-      for (c_sample in c(0.4, 0.6, 0.8, 1)) {
-        
-        set.seed(1024)
-        eta_val = 2 / rounds
-        cv.res = xgb.cv(data = train, nfold = 3, label = y, 
-                        nrounds = rounds, 
-                        eta = eta_val, 
-                        max_depth = depth,
-                        subsample = r_sample, 
-                        colsample_bytree = c_sample,
-                        early.stop.round = 0.5*rounds,
-                        objective='binary:logistic', 
-                        eval_metric = 'logloss',
-                        verbose = FALSE)
-        
-        print(paste(rounds, depth, r_sample, c_sample, min(as.matrix(cv.res)[,3]) ))
-        GS_LogLoss[nrow(GS_LogLoss)+1, ] = c(rounds, 
-                                             depth, 
-                                             r_sample, 
-                                             c_sample, 
-                                             min(as.matrix(cv.res)[,3]), 
-                                             which.min(as.matrix(cv.res)[,3]))
-        
-      }
-    }
-  }
-}
-
-#######
