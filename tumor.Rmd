@@ -4,7 +4,10 @@ title: "Glioblastoma cancer clustering EDA"
 
 Glioblastoma is the most deadly type of brain cancer. Usually affects 50 and 70 year old population, and it is one of the fastest growing cancer since it affects the brain glia cells (often fast-growing and invasive). This time we will try to create a clustering and hierarchichal classification of patients.
 
-![glio](/Users/hp/Desktop/f/Statopia/tumor-v2_files/glio.jpg)
+![Scan of an advanced Glioblastoma](/Users/hp/Desktop/f/Statopia/tumor-v2_files/glio.jpg)
+
+
+
 # 1. Collecting data
 
 We will use the public database from Columbia University:

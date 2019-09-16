@@ -1,5 +1,8 @@
 ---
-title: "Homepage"
+title: "About me"
 ---
 
-Hello, website!
+Hi and welcome to my site! I'm David, a data scientist with over 3 years of experience using tools like R, Python, SQL or Google Apps Script to bring new business ideas and generate impact. Feel free to take a look at my resume.
+
+![My Resume](/Users/hp/Desktop/f/Statopia/tumor-v2_files/resume.jpg)
+

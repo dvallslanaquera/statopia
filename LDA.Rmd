@@ -1,0 +1,148 @@
+---
+title: "Linear Discriminant Analysis (LDA)"
+---
+
+This is a method of **supervised multivariant classification** and it is one of the 
+most powerful tool a data analyst have. With this method we can look for the 
+significance of the variables and we can make predictions. 
+To make this model we need an explanatory matrix X and a response matrix Y.
+We will use the iris database as example.
+
+![Iris](https://www.google.co.jp/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=2ahUKEwiEiMrDs4TcAhXZc94KHa0DA_oQjRx6BAgBEAU&url=https%3A%2F%2Fwww.palass.org%2Fpublications%2Fnewsletter%2Fpalaeomath-101%2Fpalaeomath-part-10-groups-i&psig=AOvVaw1xACKJnOklPvq1RMLEUeM3&ust=1530757854877316)
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=FALSE}
+library(ade4)
+library(vegan)
+library(ellipse)
+library(mvnormtest)
+library(psych)
+library(MASS)
+library(klaR)
+data(iris)
+```
+
+```{r tables-mtcars, echo=FALSE}
+knitr::kable(iris[1:5, ], caption = 'A caption of the Iris database')
+```
+
+## 1- Standarization and exploration
+
+```{r warning=FALSE}
+iris.hle <- decostand(as.matrix(iris[1:4]), "hellinger") 
+gr <- cutree(hclust(vegdist(iris.hle, "euc"), "ward.D"), 3)
+table(gr)
+```
+We used k = 3 groups, as the theory suggests. The model classified the data in 3 gropus of similar size.
+
+
+
+## 2- Assumptions check 
+The LDA model is a parametric model, so there are assumptions to check and control.
+
+###2.1. NA values
+
+```{r}
+any(is.na(iris))
+```
+There are not any NA value.
+
+###2.2. Multivariant homogeneity 
+
+```{r warning=FALSE}
+iris.pars <- as.matrix(iris[, 1:4])
+iris.pars.d <- dist(iris.pars)
+(iris.MHV <- betadisper(iris.pars.d, gr))
+anova(iris.MHV)
+permutest(iris.MHV)
+```
+
+We can not accept the homogeneity assumption. We try to transform the data eliminating
+outlier values.
+
+```{r echo=FALSE, fig.height=15}
+par(mfrow = c(4, 1))
+boxplot(iris[1], iris[2], main = "Sepal.Width vs. Sepal.Length", col = "red", horizontal = TRUE)
+boxplot(iris[2], iris[3], main = "Petal.Length vs. Sepal.Width", col = "blue", horizontal = TRUE)
+boxplot(iris[3], iris[4], main = "Petal.Width vs. Petal.Length", col = "green", horizontal = TRUE)
+boxplot(iris[1], iris[4], main = "Sepal.Length vs. Petal.Width", col = "yellow", horizontal = TRUE)
+```
+```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=FALSE}
+require(fBasics)
+```
+```{r warning=FALSE}
+skewness(iris[1:4])
+outliers::outlier(iris[2])
+which(iris[2] >= 4.1 | iris[2] < 2.2) 
+iris[c(16, 33, 34, 61), 2] <- mean(iris[,2])
+
+iris2 <- cbind(log(iris[1]), iris[2], iris[3], iris[4])
+skewness(iris2[1:4])
+```
+```{r echo=FALSE, warning=FALSE, fig.height=15}
+par(mfrow = c(4, 1))
+boxplot(iris2[1], iris2[2], main = "Sepal.Width vs. Sepal.Length", col = "red", horizontal = TRUE)
+boxplot(iris2[2], iris2[3], main = "Petal.Length vs. Sepal.Width", col = "blue", horizontal = TRUE)
+boxplot(iris2[3], iris2[4], main = "Petal.Width vs. Petal.Length", col = "green", horizontal = TRUE)
+boxplot(iris2[1], iris2[4], main = "Sepal.Length vs. Petal.Width", col = "yellow", horizontal = TRUE)
+
+```
+
+The two first variables are skewed to the right and the third one is skewed to the left.
+```{r warning=FALSE}
+iris.pars2 <- as.matrix(iris2)
+iris.pars.d2 <- dist(iris.pars2)
+(iris.MHV2 <- betadisper(iris.pars.d2, gr))
+anova(iris.MHV2)
+permutest(iris.MHV2)
+```
+We can not accept the homogeneity of the sample even after transforming the data. In this case
+we should make a non-parametric model like a Quadratic Discriminant Analysis (QDA).
+
+###2.3. Normality 
+```{r warning=FALSE}
+par(mfrow = c(1, ncol(iris.pars2)))
+for(j in 1:ncol(iris.pars2)){
+  hist(iris.pars2[,j])}
+
+mshapiro.test(t(iris.pars2))
+```
+We can not accept the normality assumption too, due to the third and forth variables anormality.
+
+###2.4. Multicollinearity 
+```{r}
+as.dist(cor(iris.pars2))
+faraway::vif(iris.pars2)
+```
+There is one problem of multicollinearity between Petal.Length - Petal.Width. We will continue
+our analysis without the Petal.Length variable to improve the output.
+```{r}
+iris.pars3 <- iris.pars[, -3]
+```
+###2.5. Linearity
+```{r}
+psych::pairs.panels(iris[1:4], gap = 0, bg = c("red", "blue", "green")[iris$Species], pch = 21)
+```
+
+There are some non-linear relationships. We should try a KDA or K-mDA model instead. We will 
+continue with our LDA model in light of example. 
+
+
+
+##3- LDA model
+
+```{r warning=FALSE}
+iris.pars3.df <- as.data.frame(iris.pars3)
+(iris.lda <- lda(gr ~ Sepal.Length + Sepal.Width + Petal.Width, data = iris.pars3.df))
+iris.lda$count
+```
+The formula of the model will be:
+- $LD1 = 0.653 * Sepal.Length - 2.471 * Sepal.Width + 4.975 * Petal.Width$
+- $LD2 = -0.659 * Sepal.Length + 2.819 * Sepal.Width + 1.464 * Petal.Width$
+
+The proporton of trace indicates that with just one LD we achive up to **a 99% of discimination**.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+library(devtools)
+# xfun::install_github("fawda123/ggord")
+library(ggord)
+```
