@@ -268,18 +268,21 @@ $(document).ready(function () {
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="index.html">My website</a>
+      <a class="navbar-brand" href="index.html">Statopia</a>
     </div>
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="index.html">Home</a>
-</li>
-<li>
-  <a href="about.html">About me</a>
+  <a href="index.html">About me</a>
 </li>
 <li>
   <a href="tumor.html">Tumor analysis</a>
+</li>
+<li>
+  <a href="Clustering.html">Clustering</a>
+</li>
+<li>
+  <a href="LDA.html">LDA</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -299,9 +302,15 @@ $(document).ready(function () {
 
 
 <p>Glioblastoma is the most deadly type of brain cancer. Usually affects 50 and 70 year old population, and it is one of the fastest growing cancer since it affects the brain glia cells (often fast-growing and invasive). This time we will try to create a clustering and hierarchichal classification of patients.</p>
-<p><img src="tumor-v2_files/glio.jpg" alt="glio" /> # 1. Collecting data</p>
+<div class="figure">
+<img src="C:/Users/hp/Desktop/f/Statopia/tumor-v2_files/glio.jpg" alt="Scan of an advanced Glioblastoma" />
+<p class="caption">Scan of an advanced Glioblastoma</p>
+</div>
+<div id="collecting-data" class="section level1">
+<h1>1. Collecting data</h1>
 <p>We will use the public database from Columbia University:</p>
 <p>Here we have a 42x10 database. It is rather a small sample, but we can make a good classification model with it.</p>
+</div>
 <div id="preprocessing" class="section level1">
 <h1>2. Preprocessing</h1>
 <p>Some problems with the original database can be observed. There are too many factorial strings and just two columns of integers (<code>survival_days</code> and <code>initial_kps</code>). We have to convert them into numeric columns in order to continue our analysis properly:</p>

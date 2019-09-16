@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>Linear Discriminant Analysis (LDA)</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="styles.css" type="text/css" />
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Statopia</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">About me</a>
+</li>
+<li>
+  <a href="tumor.html">Tumor analysis</a>
+</li>
+<li>
+  <a href="Clustering.html">Clustering</a>
+</li>
+<li>
+  <a href="LDA.html">LDA</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Linear Discriminant Analysis (LDA)</h1>
+
+</div>
+
+
+<p>This is a method of <strong>supervised multivariant classification</strong> and it is one of the most powerful tool a data analyst have. With this method we can look for the significance of the variables and we can make predictions. To make this model we need an explanatory matrix X and a response matrix Y. We will use the iris database as example.</p>
+<div class="figure">
+<img src="https://www.google.co.jp/url?sa=i&amp;rct=j&amp;q=&amp;esrc=s&amp;source=images&amp;cd=&amp;cad=rja&amp;uact=8&amp;ved=2ahUKEwiEiMrDs4TcAhXZc94KHa0DA_oQjRx6BAgBEAU&amp;url=https%3A%2F%2Fwww.palass.org%2Fpublications%2Fnewsletter%2Fpalaeomath-101%2Fpalaeomath-part-10-groups-i&amp;psig=AOvVaw1xACKJnOklPvq1RMLEUeM3&amp;ust=1530757854877316" alt="Iris" />
+<p class="caption">Iris</p>
+</div>
+<table>
+<caption>A caption of the Iris database</caption>
+<thead>
+<tr class="header">
+<th align="right">Sepal.Length</th>
+<th align="right">Sepal.Width</th>
+<th align="right">Petal.Length</th>
+<th align="right">Petal.Width</th>
+<th align="left">Species</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">5.1</td>
+<td align="right">3.5</td>
+<td align="right">1.4</td>
+<td align="right">0.2</td>
+<td align="left">setosa</td>
+</tr>
+<tr class="even">
+<td align="right">4.9</td>
+<td align="right">3.0</td>
+<td align="right">1.4</td>
+<td align="right">0.2</td>
+<td align="left">setosa</td>
+</tr>
+<tr class="odd">
+<td align="right">4.7</td>
+<td align="right">3.2</td>
+<td align="right">1.3</td>
+<td align="right">0.2</td>
+<td align="left">setosa</td>
+</tr>
+<tr class="even">
+<td align="right">4.6</td>
+<td align="right">3.1</td>
+<td align="right">1.5</td>
+<td align="right">0.2</td>
+<td align="left">setosa</td>
+</tr>
+<tr class="odd">
+<td align="right">5.0</td>
+<td align="right">3.6</td>
+<td align="right">1.4</td>
+<td align="right">0.2</td>
+<td align="left">setosa</td>
+</tr>
+</tbody>
+</table>
+<div id="standarization-and-exploration" class="section level2">
+<h2>1- Standarization and exploration</h2>
+<pre class="r"><code>iris.hle &lt;- decostand(as.matrix(iris[1:4]), &quot;hellinger&quot;) 
+gr &lt;- cutree(hclust(vegdist(iris.hle, &quot;euc&quot;), &quot;ward.D&quot;), 3)
+table(gr)</code></pre>
+<pre><code>## gr
+##  1  2  3 
+## 50 48 52</code></pre>
+<p>We used k = 3 groups, as the theory suggests. The model classified the data in 3 gropus of similar size.</p>
+</div>
+<div id="assumptions-check" class="section level2">
+<h2>2- Assumptions check</h2>
+<p>The LDA model is a parametric model, so there are assumptions to check and control.</p>
+<p>###2.1. NA values</p>
+<pre class="r"><code>any(is.na(iris))</code></pre>
+<pre><code>## [1] FALSE</code></pre>
+<p>There are not any NA value.</p>
+<p>###2.2. Multivariant homogeneity</p>
+<pre class="r"><code>iris.pars &lt;- as.matrix(iris[, 1:4])
+iris.pars.d &lt;- dist(iris.pars)
+(iris.MHV &lt;- betadisper(iris.pars.d, gr))</code></pre>
+<pre><code>## 
+##  Homogeneity of multivariate dispersions
+## 
+## Call: betadisper(d = iris.pars.d, group = gr)
+## 
+## No. of Positive Eigenvalues: 4
+## No. of Negative Eigenvalues: 0
+## 
+## Average distance to median:
+##      1      2      3 
+## 0.4814 0.6990 0.8190 
+## 
+## Eigenvalues for PCoA axes:
+##   PCoA1   PCoA2   PCoA3   PCoA4 
+## 630.008  36.158  11.653   3.551</code></pre>
+<pre class="r"><code>anova(iris.MHV)</code></pre>
+<pre><code>## Analysis of Variance Table
+## 
+## Response: Distances
+##            Df  Sum Sq Mean Sq F value    Pr(&gt;F)    
+## Groups      2  2.9735  1.4867  10.884 3.909e-05 ***
+## Residuals 147 20.0803  0.1366                      
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>permutest(iris.MHV)</code></pre>
+<pre><code>## 
+## Permutation test for homogeneity of multivariate dispersions
+## Permutation: free
+## Number of permutations: 999
+## 
+## Response: Distances
+##            Df  Sum Sq Mean Sq      F N.Perm Pr(&gt;F)    
+## Groups      2  2.9735  1.4867 10.884    999  0.001 ***
+## Residuals 147 20.0803  0.1366                         
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>We can not accept the homogeneity assumption. We try to transform the data eliminating outlier values.</p>
+<p><img src="LDA_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<pre class="r"><code>skewness(iris[1:4])</code></pre>
+<pre><code>## Sepal.Length  Sepal.Width Petal.Length  Petal.Width 
+##    0.3086407    0.3126147   -0.2694109   -0.1009166</code></pre>
+<pre class="r"><code>outliers::outlier(iris[2])</code></pre>
+<pre><code>## Sepal.Width 
+##         4.4</code></pre>
+<pre class="r"><code>which(iris[2] &gt;= 4.1 | iris[2] &lt; 2.2) </code></pre>
+<pre><code>## [1] 16 33 34 61</code></pre>
+<pre class="r"><code>iris[c(16, 33, 34, 61), 2] &lt;- mean(iris[,2])
+
+iris2 &lt;- cbind(log(iris[1]), iris[2], iris[3], iris[4])
+skewness(iris2[1:4])</code></pre>
+<pre><code>## Sepal.Length  Sepal.Width Petal.Length  Petal.Width 
+##   0.04272597   0.12722662  -0.26941093  -0.10091657</code></pre>
+<p><img src="LDA_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>The two first variables are skewed to the right and the third one is skewed to the left.</p>
+<pre class="r"><code>iris.pars2 &lt;- as.matrix(iris2)
+iris.pars.d2 &lt;- dist(iris.pars2)
+(iris.MHV2 &lt;- betadisper(iris.pars.d2, gr))</code></pre>
+<pre><code>## 
+##  Homogeneity of multivariate dispersions
+## 
+## Call: betadisper(d = iris.pars.d2, group = gr)
+## 
+## No. of Positive Eigenvalues: 4
+## No. of Negative Eigenvalues: 0
+## 
+## Average distance to median:
+##      1      2      3 
+## 0.3401 0.5081 0.6266 
+## 
+## Eigenvalues for PCoA axes:
+##    PCoA1    PCoA2    PCoA3    PCoA4 
+## 551.4433  19.7877   5.1255   0.4618</code></pre>
+<pre class="r"><code>anova(iris.MHV2)</code></pre>
+<pre><code>## Analysis of Variance Table
+## 
+## Response: Distances
+##            Df  Sum Sq Mean Sq F value    Pr(&gt;F)    
+## Groups      2  2.1079 1.05394  14.288 2.137e-06 ***
+## Residuals 147 10.8436 0.07377                      
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>permutest(iris.MHV2)</code></pre>
+<pre><code>## 
+## Permutation test for homogeneity of multivariate dispersions
+## Permutation: free
+## Number of permutations: 999
+## 
+## Response: Distances
+##            Df  Sum Sq Mean Sq      F N.Perm Pr(&gt;F)    
+## Groups      2  2.1079 1.05394 14.288    999  0.001 ***
+## Residuals 147 10.8436 0.07377                         
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>We can not accept the homogeneity of the sample even after transforming the data. In this case we should make a non-parametric model like a Quadratic Discriminant Analysis (QDA).</p>
+<p>###2.3. Normality</p>
+<pre class="r"><code>par(mfrow = c(1, ncol(iris.pars2)))
+for(j in 1:ncol(iris.pars2)){
+  hist(iris.pars2[,j])}</code></pre>
+<p><img src="LDA_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<pre class="r"><code>mshapiro.test(t(iris.pars2))</code></pre>
+<pre><code>## 
+##  Shapiro-Wilk normality test
+## 
+## data:  Z
+## W = 0.97503, p-value = 0.007804</code></pre>
+<p>We can not accept the normality assumption too, due to the third and forth variables anormality.</p>
+<p>###2.4. Multicollinearity</p>
+<pre class="r"><code>as.dist(cor(iris.pars2))</code></pre>
+<pre><code>##              Sepal.Length Sepal.Width Petal.Length
+## Sepal.Width    -0.1377389                         
+## Petal.Length    0.8786347  -0.4001647             
+## Petal.Width     0.8281772  -0.3359133    0.9628654</code></pre>
+<pre class="r"><code>faraway::vif(iris.pars2)</code></pre>
+<pre><code>## Sepal.Length  Sepal.Width Petal.Length  Petal.Width 
+##     6.236970     1.729705    27.477004    15.465980</code></pre>
+<p>There is one problem of multicollinearity between Petal.Length - Petal.Width. We will continue our analysis without the Petal.Length variable to improve the output.</p>
+<pre class="r"><code>iris.pars3 &lt;- iris.pars[, -3]</code></pre>
+<p>###2.5. Linearity</p>
+<pre class="r"><code>psych::pairs.panels(iris[1:4], gap = 0, bg = c(&quot;red&quot;, &quot;blue&quot;, &quot;green&quot;)[iris$Species], pch = 21)</code></pre>
+<p><img src="LDA_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p>There are some non-linear relationships. We should try a KDA or K-mDA model instead. We will continue with our LDA model in light of example.</p>
+<p>##3- LDA model</p>
+<pre class="r"><code>iris.pars3.df &lt;- as.data.frame(iris.pars3)
+(iris.lda &lt;- lda(gr ~ Sepal.Length + Sepal.Width + Petal.Width, data = iris.pars3.df))</code></pre>
+<pre><code>## Call:
+## lda(gr ~ Sepal.Length + Sepal.Width + Petal.Width, data = iris.pars3.df)
+## 
+## Prior probabilities of groups:
+##         1         2         3 
+## 0.3333333 0.3200000 0.3466667 
+## 
+## Group means:
+##   Sepal.Length Sepal.Width Petal.Width
+## 1     5.006000    3.428000    0.246000
+## 2     5.927083    2.777083    1.316667
+## 3     6.571154    2.959615    2.007692
+## 
+## Coefficients of linear discriminants:
+##                     LD1       LD2
+## Sepal.Length  0.6532649 -0.659779
+## Sepal.Width  -2.4718234  2.819200
+## Petal.Width   4.9757063  1.464479
+## 
+## Proportion of trace:
+##    LD1    LD2 
+## 0.9896 0.0104</code></pre>
+<pre class="r"><code>iris.lda$count</code></pre>
+<pre><code>##  1  2  3 
+## 50 48 52</code></pre>
+<p>The formula of the model will be: - <span class="math inline">\(LD1 = 0.653 * Sepal.Length - 2.471 * Sepal.Width + 4.975 * Petal.Width\)</span> - <span class="math inline">\(LD2 = -0.659 * Sepal.Length + 2.819 * Sepal.Width + 1.464 * Petal.Width\)</span></p>
+<p>The proporton of trace indicates that with just one LD we achive up to <strong>a 99% of discimination</strong>.</p>
+</div>
+
+<p>Copyright &copy; 2019 David Valls Lanaquera All rights reserved </p>
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
